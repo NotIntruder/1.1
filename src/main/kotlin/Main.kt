@@ -1,28 +1,32 @@
 package main
 
 import java.nio.charset.StandardCharsets
-import java.io.FileInputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.io.InputStream
+import java.net.ServerSocket
+import java.net.Socket
 
 
-fun main() {
-    val messages = FileInputStream("messages.txt")
-    val lines = getLinesChannel(messages)
-
-    runBlocking {
-        for (line in lines) {
-            println("read: $line")
+fun main() = runBlocking {
+    val source = ServerSocket(6767)
+    while (true) {
+        // Now the implementation launches new instances in parallel per connection making it One-to-Many relation
+        val socket = source.accept()
+        launch {
+            sessionHandler(socket)
         }
     }
+//        println("Connection closed.")
+//        source.close();
 }
 
-fun getLinesChannel(f: FileInputStream): Channel<String> {
+fun CoroutineScope.getLinesChannel(f: InputStream): Channel<String> {
     var stringHelper = ""
     val buffer = ByteArray(8)
     val channel = Channel<String>()
 
-    GlobalScope.launch {
+    launch {
         while (true) {
             val read = f.read(buffer)
 
@@ -52,4 +56,16 @@ fun getLinesChannel(f: FileInputStream): Channel<String> {
         f.close()
     }
     return channel
+}
+
+fun CoroutineScope.sessionHandler(socket: Socket) {
+    println("Connection accepted.")
+    val lines = getLinesChannel(socket.getInputStream())
+
+    for (line in lines) {
+        println(line)
+    }
+
+    println("Connection closed.")
+    socket.close()
 }
