@@ -1,5 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.3.21"
+    kotlin("jvm") version "2.1.21"
+    application                          // add this
 }
 
 group = "org.notintruder"
@@ -15,7 +16,16 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(24)
+    jvmToolchain(23)
+}
+
+application {
+    mainClass.set("cmd.tcplistener.MainKt")  // your main class
+}
+
+tasks.withType<JavaExec> {
+    standardInput = System.`in`              // keeps stdin open
+    jvmArgs("-Djava.io.stdout.encoding=UTF-8")
 }
 
 tasks.test {
